@@ -3,73 +3,328 @@
     <head>
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=Edge">
-        <meta name="viewport" content="width-device-width, initial-scaled=1.0, maximum-scale=1.0">
-        <title>Chocolate Shop Website Template</title>
-        
-
-        <style>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+        <title>Coffee Break</title>
+    
+        <style>       
             *{
                 margin: 0;
                 padding: 0;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             }
 
-            .header{
+            section{
+                margin:0%;
+                padding: auto;
+                
+            }
+
+            .headermain{
                 padding: 5;
                 margin: 5;
                 display: flex;
-                justify-content: space-around;
-                background-color: rgb(162, 42, 42);
-                height:60px;
+                justify-content: left;
+                background-color: rgba(230, 202, 202, 0);
+                height: 60px;
+                align-items: center;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                z-index: 100;
+            }
+
+            .headermain a{
+                text-decoration: none;
+                color: white;
+                font-size: 20px;
+            }
+
+            .logo{
+                height: 60px;
+                width: 200px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                
+            }
+            .nav {
+                height: 60px;
+                width: 500px;
+                display:flex;
+                margin-left: 10px;
+                justify-content: space-evenly;
                 align-items: center;
                 
             }
 
-            .header a{
-                text-decoration: none;
-                color:white;
-                font-size: 20px;
-            }
-            .nav {
-                width: 500px;
+            .search {
+                height: 60px;
+                width: 200px;
                 display:flex;
+                margin-left: 10px;
                 justify-content: space-evenly;
-                background-color: rgb(246, 93, 63);
-            }
-
-            nav a:hover{
+                align-items: center;
                 
             }
 
-            .login{
-                font-size: 20px;
+            .info{
+                height: 60px;
+                width: 300px;
+                display:flex;
+                margin-left: auto;
+                justify-content: space-evenly;
+                align-items: center;
+                
             }
 
-            .cart{
-                font-size: 20px;
+            nav a:hover{
+                background-color: brown;
+            }
+
+        
+            .slider{
+                width: 100%;
+                height: 100vh;
+                overflow: hidden;
+                position: relative;
+            }
+
+            .mySlides{
+                width: 100%;
+                height: 100%;
+                position: absolute;
+                top: 0;
+                left: 100%;
+                animation: sliderAnimation 16s infinite;
+            }
+
+            .mySlides:nth-child(1){
+                animation-delay: 0s;
+            }
+
+            .mySlides:nth-child(2){
+                animation-delay: 4s;
+            }
+
+            .mySlides:nth-child(3){
+                animation-delay: 8s;
+            }
+
+            .mySlides:nth-child(4){
+                animation-delay: 12s;
+            }
+
+            @keyframes sliderAnimation{
+
+                0%{
+                    left: 100%;
+                }
+
+                5%{
+                    left: 0%;
+                }
+
+                25%{
+                    left: 0%;
+                }
+
+                30%{
+                    left: -100%;
+                }
+
+                30.01%{
+                    left: 100%;
+                }
+
+                100%{
+                    left: 100%;
+                }
+            }
+
+           
+            .mySlides img{
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                background-size: contain;
+                display: block;
+            }
+
+            .prev, .next{
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                color: white;
+                font-size: 30px;
+                padding: 10px;
+                cursor: pointer;
+                background-color: rgba(0,0,0,0.5);
+                user-select: none;
+            }
+
+            .prev{
+                left: 10px;
+            }
+
+            .next{
+                right: 10px;
+            }            
+        
+
+            table{
+                width: 60%;
+                border-collapse: collapse;
+                margin: 20px auto;
+            }
+
+            th, td{
+                border: 2px solid black;
+                padding: 10px;
+                text-align: center;
+            }
+
+            th{
+                background-color: rgb(151, 27, 27);
+                color: white;
+                
+            }
+
+            tr:hover{
+                background-color: rgb(226, 173, 107);
             }
 
         </style>
+    
     </head>
 
     <body>
-        <header>    
-        <div class="header">
-            <a href="default" class="logo">CoffeeBreak</a>
-                        
-            <div class="nav">
-                <a class="active" href="#home">Home</a>
-                <a href="#menu">Menu</a>
-                <a href="#order">Order</a>
-                <a href="#contact">Contact Us</a>
+        <header>
+            <div class="first">
+                <div class="headermain">
+                    <a href="default" class="logo">CoffeeBreak</a>
+                                
+                    <div class="nav">
+                        <a class="active" href="#home">Home</a>
+                        <a href="#menu">Menu</a>
+                        <a href="#order">Order</a>
+                        <a href="#contact">Contact Us</a>
+                    </div>
+                    <div class="search">
+                        <a href="#search">Search</a>
+                    </div>
+                    <div class="info"> 
+                        <a href="signup.html">Login</a>
+                        <a href="#cart">Cart</a>
+                    </div>
+                </div>
             </div>
-            <div></div>
-            <div class="login"> 
-                Login
+        </header>
+
+            <div class="second">
+                <div class="slider">
+                    <div class="mySlides">
+                        <img src="Images\Front_image.avif">
+                        <div class="Info_overlay">
+                            <!-- <h2>Chocolate Factory</h2> -->
+                        </div>
+                    </div>
+
+                    <div class="mySlides">
+                        <img src="Images\image2.jpg">
+                        <div class="info-overlay">
+                            <!-- <h3>Title 2</h3> -->
+                        </div>
+                    </div>
+
+                    <div class="mySlides">
+                        <img src="Images\image3.jpg">
+                        <div class="info-overlay">
+                            <!-- <h3>Title 3</h3> -->
+                        </div>
+                    </div>
+
+                    <div class="mySlides">
+                        <img src="Images\macaron1.avif">
+                        <div class="info-overlay">
+                            <!-- <h3>Title 4</h3> -->
+                        </div>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
+                    <a class="next" onclick="plusSlides(1)">&#10095;</a>
+                </div>
             </div>
+             
+            <div class="TABLE">
+                <table>
+                    <tr>
+                        <th>SR No.</th>
+                        <th>Categories</th>
+                        <th>Items</th>
+                    </tr>
+
+                    <tr>
+                        <td>1.</td>
+                        <td>Chocolate</td>
+                        <td>Dark,
+                            Milk,
+                            Roasted Almond
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2.</td>
+                        <td>Coffee</td>
+                        <td>Dark Roasted,
+                            Cappuccino
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>3.</td>
+                        <td>Croissant</td>
+                        <td>Classic,
+                            Choco Filled,
+                            Pistachio 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>4.</td>
+                        <td>Macaron</td>
+                        <td>Blackcuurant,
+                            Vanilla,
+                            Bergamot
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
         
-            <div class="cart">Cart</div>
-        </div>
-        </header>     
-            
+        <script>
+            let slideIndex = 1;
+            showSlides(slideIndex);
+
+            function plusSlides(n) {
+                showSlides(slideIndex += n);
+            }
+
+            function showSlides(n) {
+                let slides = document.getElementsByClassName("mySlides");
+
+                if (n > slides.length) {
+                    slideIndex = 1
+                }    
+                if (n < 1) {
+                    slideIndex = slides.length
+                }
+                for (let i = 0; i < slides.length; i++) {
+                    slides[i].style.display = "block";  
+                }
+                slides[slideIndex-1].style.display = "block";  
+            }
+
+        </script>
+
+    
     </body>
 </html>
