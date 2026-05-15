@@ -1,0 +1,161 @@
+*{
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+section{
+    margin:0%;
+    padding: auto;
+    
+}
+
+.headermain{
+    padding: 5;
+    margin: 5;
+    display: flex;
+    justify-content: left;
+    background-color: rgba(20, 20, 20, 0.705);
+    height: 70px;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+}
+
+.headermain a{
+    text-decoration: none;
+    color: white;
+    font-size: 20px;
+}
+
+.logo{
+    height: 80px;
+    width: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+}
+
+.logo img{
+    height: 145px;
+    width: auto;
+}
+
+.nav{
+    height: 60px;
+    width: 500px;
+    display:flex;
+    margin-left: 10px;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.nav a{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 16px;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.nav a:hover{
+    background: rgba(255,255,255,0.18);
+    transform: translateY(-1px);
+}
+
+.nav a + a {
+    margin-left: 8px;
+}
+
+
+.search {
+    height: 60px;
+    width: 200px;
+    display:flex;
+    margin-left: 10px;
+    justify-content: space-evenly;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+.search:hover{
+    background: rgba(255,255,255,0.2);
+    transform: translateY(-1px);
+}
+
+
+.info{
+    height: 60px;
+    width: 300px;
+    display:flex;
+    margin-left: auto;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.info a{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 16px;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.info a:hover{
+    background: rgba(255,255,255,0.18);
+    transform: translateY(-1px);
+}
+
+.info a + a {
+    margin-left: 8px;
+}
+
+
+.settings{
+    height: 60px;
+    width: 60px;
+    display:flex;
+    margin-left: 10px;
+    justify-content: center;
+    align-items: center;
+}
+
+.settings-toggle{
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 6px;
+    border: none;
+    background: rgba(255,255,255,0.1);
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.settings-toggle:hover{
+    background: rgba(255,255,255,0.2);
+    transform: translateY(-1px);
+}
+
+.settings-toggle span{
+    display: block;
+    width: 18px;
+    height: 2px;
+    margin: 3px 0;
+    background: white;
+    border-radius: 2px;
+}
