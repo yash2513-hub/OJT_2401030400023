@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+        <title>Plug-in Examples</title>
+    </head>
+
+    <body>
+        <div id="nav">
+            <nav class="bg-gray-800 p-4 text-white">
+                <ul class="flex space-x-4">
+                    <li><a href="#home" class="hover:underline">Home</a></li>
+                    <li><a href="jqex.html" class="hover:underline">jQuery Example</a></li>
+                    <li><a href="plug-in.html" class="hover:underline">Plug-in Examples</a></li>
+                </ul>
+            </nav>
+        </div>
+        <div class="container mx-auto p-4">
+            <h1>TailwindCSS Plug-in Examples</h1>
+            <div class="flex" id="example1">
+                <div class="w-1/2 p-4 bg-blue-200">Example 1: Basic Flexbox</div>
+                <div class="w-1/8 p-4 bg-green-200">This is a simple flexbox layout using TailwindCSS.</div>
+                <div class="w-1/3 p-4 bg-yellow-200">Example 2: Responsive Design</div>
+                <div class="w-1/7 p-4 bg-red-200">This layout adjusts based on screen size, demonstrating responsive design with TailwindCSS.</div>
+                <div class="w-1/3 p-4 bg-purple-200">Example 3: Custom Utilities</div>
+                <div class="w-1/6 p-4 bg-pink-200">This example shows how to create custom utilities in TailwindCSS for specific styling needs.</div>
+
+            </div>
+        </div>
+    </body>
+</html>    
