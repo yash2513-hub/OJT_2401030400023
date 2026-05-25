@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script> -->
+        <link rel="stylesheet" href="darkMode.css">
+        <title>jQuery Example</title>
+        <style>
+            body {
+                background-color: #ffffff;
+                color: #333333;
+                transition: background-color 0.3s, color 0.3s;
+            }
+            
+            body.dark-mode {
+                background-color: #121212;
+                color: #f9f9f9;
+            }
+            
+            body.dark-mode button {
+                background-color: #494949;
+                color: #f9f9f9;   
+            }
+            
+            body.dark-mode table{
+                background-color: #121212;
+                color: #f9f9f9;
+            }
+            #footer {
+                display: none;
+                margin-top: 20px;
+                padding: 10px;
+                border: 1px solid #ccc;
+            }
+        </style>
+    </head>
+
+    <body >
+        <h1>jQuery Example</h1>
+        <p id="first">This is a simple jQuery example.</p>
+        <p id="second">This is another paragraph.</p>
+        <button id="hideText">Hide Second Text</button>
+        <button id="showText">Show Second Text</button>
+        <p></p>
+        <p id="third">This is yet another paragraph.</p>
+        <button id="toggle">Toggle Third Text</button>
+        <section>
+            <div id="table1" class="table1" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;">
+                <table border="1" cellpadding="10" cellspacing="0" width="100%" style="border-collapse: collapse; text-align: center;">
+                    <tr style="font-size: larger; ">
+                        <th>Name</th>
+                        <th>Age</th>
+                        <th>City</th>
+                    </tr>
+                    <tr>
+                        <td>Alice</td>
+                        <td>30</td>
+                        <td>New York</td>
+                    </tr>
+                    <tr>
+                        <td>Bob</td>
+                        <td>25</td>
+                        <td>Los Angeles</td>
+                    </tr>
+                    <tr>
+                        <td>Charlie</td>
+                        <td>35</td>
+                        <td>Chicago</td>
+                    </tr>
+                    <tr>
+                        <td>David</td>
+                        <td>28</td>
+                        <td>Houston</td>
+                    </tr>
+                    <tr>
+                        <td>Eve</td>
+                        <td>22</td>
+                        <td>Phoenix</td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+        <p></p>
+        <button id="darkMode">Toggle Dark Mode</button>
+        <button id="foot">See Footer</button>
+        <div id="footer">
+            <p>Created by Yash</p>
+        </div>
+        <script src="https://code.jquery.com/jquery-4.0.0.min.js" integrity="sha256-OaVG6prZf4v69dPg6PhVattBXkcOWQB62pdZ3ORyrao=" crossorigin="anonymous"></script>
+        <script>
+            
+                $("#hideText").click(function() {
+                    $("#second").hide(speed="slow");
+                });
+
+                $("#showText").click(function() {
+                    $("#second").show(speed="slow");
+                });
+
+                $("#toggle").click(function() {
+                    $("#third").toggle(speed="slow");
+                });
+
+                $("#darkMode, h1").click(function() {
+                    $("body").toggleClass("dark-mode");
+                });
+
+                $("#foot").click(function() {
+                    $("#footer").toggle(speed="slow");
+                });
+            
+                $("table tr:even").css("background-color", "#000000");
+                $("table tr:even").css("color", "#ffffff");
+        </script>
+    </body>
+</html>
