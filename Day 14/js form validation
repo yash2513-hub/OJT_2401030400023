@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Form Validation</title>
+    </head>
+
+    <body>
+        <h1>Form Validation</h1>
+        <p></p>
+        <form onsubmit="return fn()">
+            <label for="email">Enter your email:</label>
+            <input type="email" id="email" name="email" required>
+            <input type="submit" value="Submit"> 
+        </form>
+
+        <script>
+            function validateEmail(email) {
+                const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return regex.test(email);
+            }
+
+            function fn() {
+                let email = document.getElementById('email').value;
+
+                if (validateEmail(email)) {
+                    alert("Your email is: " + email);
+                    return true;
+                } else {
+                    alert("Please enter a valid email address.");
+                    return false;
+                }
+            }
+        </script>
+    
+    </body>
+</html>
