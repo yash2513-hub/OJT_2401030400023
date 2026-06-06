@@ -1,0 +1,42 @@
+.footer {
+  background: #05080F;
+  color: white;
+  padding: 60px;
+}
+
+.footer-top {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 40px;
+}
+
+.footer h3 span {
+  color: #f59e0b;
+}
+
+.footer h4 {
+  margin-bottom: 15px;
+}
+
+.footer ul {
+  list-style: none;
+  padding: 0;
+}
+
+.footer li {
+  color: #9ca3af;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.footer li:hover {
+  color: #f59e0b;
+}
+
+.footer-bottom {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #222;
+  text-align: center;
+  color: #777;
+}
