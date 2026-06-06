@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RupeeTracker — Live INR Exchange Rates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          display: ['Playfair Display', 'serif'],
+          body: ['Plus Jakarta Sans', 'sans-serif'],
+        },
+        colors: {
+          navy: { 900:'#05080F', 800:'#0A0F1C', 700:'#111827', 600:'#1a2337', 500:'#243049' },
+          gold: { 400:'#FBBF24', 500:'#F59E0B', 600:'#D97706', 700:'#B45309' },
+          emerald: { 400:'#34D399', 500:'#10B981' },
+          crimson: { 400:'#F87171', 500:'#EF4444' },
+        },
+        animation: {
+          'ticker': 'ticker 35s linear infinite',
+          'fade-up': 'fadeUp 0.6s ease forwards',
+          'pulse-slow': 'pulse 3s ease-in-out infinite',
+        },
+        keyframes: {
+          ticker: { '0%':{ transform:'translateX(0)' }, '100%':{ transform:'translateX(-50%)' } },
+          fadeUp: { '0%':{ opacity:'0', transform:'translateY(20px)' }, '100%':{ opacity:'1', transform:'translateY(0)' } },
+        }
+      }
+    }
+  }
+</script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0A0F1C; color: #e8eaf0; overflow-x: hidden; }
+  .font-display { font-family: 'Playfair Display', serif; }
+
+  /* Rupee symbol glow */
+  .rupee-glow { text-shadow: 0 0 40px rgba(245,158,11,0.5), 0 0 80px rgba(245,158,11,0.2); }
+
+  /* Gold gradient text */
+  .gold-text { background: linear-gradient(135deg, #FBBF24, #F59E0B, #D97706); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+  /* Glass card */
+  .glass { background: rgba(17,24,39,0.7); backdrop-filter: blur(12px); border: 1px solid rgba(245,158,11,0.12); }
+
+  /* Ticker */
+  .ticker-wrap { overflow: hidden; }
+  .ticker-track { display: flex; width: max-content; animation: ticker 35s linear infinite; }
+  .ticker-track:hover { animation-play-state: paused; }
+
+  /* Chart canvas */
+  #trendChart { display: block; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: #0A0F1C; }
+  ::-webkit-scrollbar-thumb { background: #D97706; border-radius: 2px; }
+
+  /* Animated underline nav */
+  .nav-link { position: relative; }
+  .nav-link::after { content:''; position:absolute; bottom:-2px; left:0; width:0; height:1px; background:#F59E0B; transition:width .3s ease; }
+  .nav-link:hover::after { width:100%; }
+
+  /* Rate card hover */
+  .rate-card { transition: transform .25s ease, border-color .25s ease; }
+  .rate-card:hover { transform: translateY(-4px); border-color: rgba(245,158,11,0.5) !important; }
+
+  /* Converter input */
+  .conv-input { background: #111827; border: 1px solid rgba(245,158,11,0.2); color: #e8eaf0; outline: none; transition: border-color .2s; }
+  .conv-input:focus { border-color: #F59E0B; box-shadow: 0 0 0 3px rgba(245,158,11,0.1); }
+
+  /* Geometric bg pattern */
+  .geo-bg { background-image: radial-gradient(circle at 20% 30%, rgba(245,158,11,0.06) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(245,158,11,0.04) 0%, transparent 50%); }
+
+  /* Feature icon */
+  .feat-icon { background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(245,158,11,0.05)); border: 1px solid rgba(245,158,11,0.2); }
+
+  /* Stagger fade */
+  .stagger > * { opacity: 0; animation: fadeUp 0.5s ease forwards; }
+  .stagger > *:nth-child(1) { animation-delay: 0.1s; }
+  .stagger > *:nth-child(2) { animation-delay: 0.2s; }
+  .stagger > *:nth-child(3) { animation-delay: 0.3s; }
+  .stagger > *:nth-child(4) { animation-delay: 0.4s; }
+  .stagger > *:nth-child(5) { animation-delay: 0.5s; }
+  .stagger > *:nth-child(6) { animation-delay: 0.6s; }
+
+  /* CTA button */
+  .btn-gold { background: linear-gradient(135deg, #F59E0B, #D97706); color: #0A0F1C; font-weight: 700; transition: transform .2s, box-shadow .2s; }
+  .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(245,158,11,0.35); }
+
+  /* Section divider */
+  .divider { width: 48px; height: 3px; background: linear-gradient(90deg, #F59E0B, transparent); border-radius: 2px; }
+</style>
+</head>
+<body class="geo-bg">
+
+<!-- ═══════════════════ NAVBAR ═══════════════════ -->
+<header id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300" style="background: rgba(10,15,28,0.0); backdrop-filter: blur(0px);">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <!-- Logo -->
+    <a href="#" class="flex items-center gap-2 group">
+      <div class="w-9 h-9 rounded-lg flex items-center justify-center btn-gold text-xl font-display font-black">₹</div>
+      <span class="font-display font-bold text-xl text-white">Rupee<span class="gold-text">Tracker</span></span>
+    </a>
+
+    <!-- Nav Links -->
+    <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
+      <a href="#rates" class="nav-link hover:text-white transition-colors">Rates</a>
+      <a href="#converter" class="nav-link hover:text-white transition-colors">Converter</a>
+      <a href="#trends" class="nav-link hover:text-white transition-colors">Trends</a>
+      <a href="#features" class="nav-link hover:text-white transition-colors">Features</a>
+    </nav>
+
+    <!-- CTA -->
+    <div class="flex items-center gap-3">
+      <button class="hidden md:block text-sm text-gray-400 hover:text-white transition-colors font-medium px-4 py-2">Sign In</button>
+      <button class="btn-gold text-sm px-5 py-2 rounded-lg">Get Started Free</button>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════ HERO ═══════════════════ -->
+<section class="min-h-screen flex flex-col justify-center relative pt-24 pb-8 px-6">
+  <!-- Decorative circles -->
+  <div class="absolute top-1/4 right-1/4 w-96 h-96 rounded-full" style="background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%); pointer-events:none;"></div>
+  <div class="absolute bottom-1/3 left-1/5 w-64 h-64 rounded-full" style="background: radial-gradient(circle, rgba(245,158,11,0.05) 0%, transparent 70%); pointer-events:none;"></div>
+
+  <div class="max-w-7xl mx-auto w-full">
+    <div class="grid lg:grid-cols-2 gap-16 items-center">
+
+      <!-- Left: Text -->
+      <div class="stagger">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-6" style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.25); color: #FBBF24;">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse-slow inline-block"></span>
+          Live rates updating every 60s
+        </div>
+
+        <h1 class="font-display text-5xl lg:text-7xl font-black leading-none text-white mb-6">
+          Track the<br/>
+          <span class="gold-text rupee-glow">Indian Rupee</span><br/>
+          in Real Time
+        </h1>
+
+        <p class="text-gray-400 text-lg leading-relaxed mb-8 max-w-lg">
+          Monitor INR exchange rates against 150+ currencies, set custom alerts, and analyse historical trends — all in one beautifully designed dashboard.
+        </p>
+
+        <div class="flex items-center gap-4 flex-wrap">
+          <button class="btn-gold px-7 py-3 rounded-xl text-base">Start Tracking Free</button>
+          <button class="px-7 py-3 rounded-xl text-base font-semibold text-gray-300 hover:text-white transition-colors" style="border: 1px solid rgba(255,255,255,0.12);">
+            View Live Rates ↓
+          </button>
+        </div>
+
+        <!-- Stats row -->
+        <div class="mt-12 flex gap-8 flex-wrap">
+          <div>
+            <p class="text-3xl font-display font-bold text-white">150<span class="gold-text">+</span></p>
+            <p class="text-xs text-gray-500 mt-0.5 uppercase tracking-wider">Currencies</p>
+          </div>
+          <div class="w-px h-12 self-center" style="background: rgba(255,255,255,0.08)"></div>
+          <div>
+            <p class="text-3xl font-display font-bold text-white">5M<span class="gold-text">+</span></p>
+            <p class="text-xs text-gray-500 mt-0.5 uppercase tracking-wider">Users</p>
+          </div>
+          <div class="w-px h-12 self-center" style="background: rgba(255,255,255,0.08)"></div>
+          <div>
+            <p class="text-3xl font-display font-bold text-white">99.9<span class="gold-text">%</span></p>
+            <p class="text-xs text-gray-500 mt-0.5 uppercase tracking-wider">Uptime</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Live Rate Card -->
+      <div class="relative">
+        <!-- Main rate card -->
+        <div class="glass rounded-3xl p-8 relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-48 h-48 rounded-full opacity-20" style="background: radial-gradient(circle, #F59E0B, transparent); transform: translate(30%, -30%);"></div>
+
+          <div class="flex items-start justify-between mb-6">
+            <div>
+              <p class="text-sm text-gray-400 font-medium mb-1">US Dollar to Indian Rupee</p>
+              <div class="flex items-end gap-3">
+                <span class="font-display text-5xl font-black text-white" id="hero-rate">84.32</span>
+                <span class="text-gray-400 text-xl mb-1">INR</span>
+              </div>
+            </div>
+            <div class="flex flex-col items-end gap-2">
+              <span class="text-xs px-2.5 py-1 rounded-full font-semibold" style="background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.25); color: #34D399;" id="hero-change">+0.23%</span>
+              <span class="text-xs text-gray-500">1 USD</span>
+            </div>
+          </div>
+
+          <!-- Mini sparkline area (SVG) -->
+          <div class="mb-6 relative">
+            <svg viewBox="0 0 320 60" preserveAspectRatio="none" style="width:100%; height:60px;">
+              <defs>
+                <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.3"/>
+                  <stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path id="sparkline-area" fill="url(#sparkGrad)"/>
+              <path id="sparkline-line" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+
+          <!-- Mini currencies -->
+          <div class="grid grid-cols-3 gap-3">
+            <div class="rounded-xl p-3 text-center" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);">
+              <p class="text-xs text-gray-500 mb-1">EUR/INR</p>
+              <p class="font-semibold text-white text-sm" id="mini-eur">91.45</p>
+              <p class="text-xs text-emerald-400 mt-0.5">+0.18%</p>
+            </div>
+            <div class="rounded-xl p-3 text-center" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);">
+              <p class="text-xs text-gray-500 mb-1">GBP/INR</p>
+              <p class="font-semibold text-white text-sm" id="mini-gbp">107.82</p>
+              <p class="text-xs text-crimson-400 mt-0.5">−0.09%</p>
+            </div>
+            <div class="rounded-xl p-3 text-center" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);">
+              <p class="text-xs text-gray-500 mb-1">JPY/INR</p>
+              <p class="font-semibold text-white text-sm" id="mini-jpy">0.562</p>
+              <p class="text-xs text-emerald-400 mt-0.5">+0.04%</p>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-4 flex items-center justify-between" style="border-top: 1px solid rgba(255,255,255,0.06);">
+            <p class="text-xs text-gray-500">Last updated: <span id="last-updated">just now</span></p>
+            <span class="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse"></span>Live
+            </span>
+          </div>
+        </div>
+
+        <!-- Floating badge -->
+        <div class="absolute -bottom-4 -left-4 glass rounded-2xl px-4 py-3 hidden lg:flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center btn-gold text-sm font-bold">📈</div>
+          <div>
+            <p class="text-xs text-gray-400">52-week high</p>
+            <p class="text-sm font-bold text-white">₹ 87.10</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ TICKER TAPE ═══════════════════ -->
+<div style="background: rgba(245,158,11,0.08); border-top: 1px solid rgba(245,158,11,0.15); border-bottom: 1px solid rgba(245,158,11,0.15);" class="py-3 overflow-hidden">
+  <div class="ticker-wrap">
+    <div class="ticker-track" id="ticker">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ LIVE RATES ═══════════════════ -->
+<section id="rates" class="py-24 px-6">
+  <div class="max-w-7xl mx-auto">
+    <div class="mb-12">
+      <div class="divider mb-4"></div>
+      <h2 class="font-display text-4xl font-bold text-white mb-3">Live Exchange Rates</h2>
+      <p class="text-gray-400">Real-time INR rates against major world currencies.</p>
+    </div>
+
+    <!-- Filter tabs -->
+    <div class="flex gap-2 mb-8 flex-wrap" id="rate-tabs">
+      <button class="tab-btn active px-4 py-2 rounded-lg text-sm font-semibold transition-all" data-filter="all">All</button>
+      <button class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all" data-filter="major">Major</button>
+      <button class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all" data-filter="asia">Asia</button>
+      <button class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all" data-filter="europe">Europe</button>
+      <button class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all" data-filter="americas">Americas</button>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4" id="rates-grid">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ CONVERTER ═══════════════════ -->
+<section id="converter" class="py-24 px-6" style="background: rgba(17,24,39,0.5);">
+  <div class="max-w-4xl mx-auto">
+    <div class="mb-12 text-center">
+      <div class="divider mx-auto mb-4"></div>
+      <h2 class="font-display text-4xl font-bold text-white mb-3">Currency Converter</h2>
+      <p class="text-gray-400">Convert any amount to or from Indian Rupees instantly.</p>
+    </div>
+
+    <div class="glass rounded-3xl p-8 lg:p-12">
+      <div class="grid md:grid-cols-2 gap-6 items-end">
+        <!-- From -->
+        <div>
+          <label class="block text-sm text-gray-400 mb-2 font-medium">From</label>
+          <div class="flex gap-3">
+            <select id="from-currency" class="conv-input rounded-xl px-4 py-4 text-sm w-32 font-semibold">
+              <option value="USD">🇺🇸 USD</option>
+              <option value="EUR">🇪🇺 EUR</option>
+              <option value="GBP">🇬🇧 GBP</option>
+              <option value="JPY">🇯🇵 JPY</option>
+              <option value="AED">🇦🇪 AED</option>
+              <option value="SGD">🇸🇬 SGD</option>
+              <option value="AUD">🇦🇺 AUD</option>
+              <option value="CAD">🇨🇦 CAD</option>
+              <option value="CHF">🇨🇭 CHF</option>
+              <option value="INR">🇮🇳 INR</option>
+            </select>
+            <input type="number" id="from-amount" value="1" min="0" class="conv-input rounded-xl px-4 py-4 text-xl font-bold flex-1" placeholder="Amount"/>
+          </div>
+        </div>
+
+        <!-- Swap button -->
+        <div class="hidden md:flex justify-center items-center pb-1">
+          <button id="swap-btn" class="w-12 h-12 rounded-xl flex items-center justify-center text-xl transition-all hover:scale-110" style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #F59E0B;">⇄</button>
+        </div>
+
+        <!-- To -->
+        <div>
+          <label class="block text-sm text-gray-400 mb-2 font-medium">To</label>
+          <div class="flex gap-3">
+            <select id="to-currency" class="conv-input rounded-xl px-4 py-4 text-sm w-32 font-semibold">
+              <option value="INR" selected>🇮🇳 INR</option>
+              <option value="USD">🇺🇸 USD</option>
+              <option value="EUR">🇪🇺 EUR</option>
+              <option value="GBP">🇬🇧 GBP</option>
+              <option value="JPY">🇯🇵 JPY</option>
+              <option value="AED">🇦🇪 AED</option>
+              <option value="SGD">🇸🇬 SGD</option>
+              <option value="AUD">🇦🇺 AUD</option>
+              <option value="CAD">🇨🇦 CAD</option>
+            </select>
+            <div class="conv-input rounded-xl px-4 py-4 text-xl font-bold flex-1 flex items-center" style="cursor:default;">
+              <span id="to-amount" class="gold-text">84.32</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result display -->
+      <div class="mt-8 p-5 rounded-2xl text-center" style="background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.15);">
+        <p class="text-gray-400 text-sm mb-1">Conversion Result</p>
+        <p class="font-display text-3xl font-bold text-white" id="result-text">1 USD = 84.32 INR</p>
+        <p class="text-xs text-gray-500 mt-2">Mid-market rate · <span id="conv-time">Updated just now</span></p>
+      </div>
+
+      <!-- Quick amounts -->
+      <div class="mt-6 flex gap-2 justify-center flex-wrap">
+        <p class="text-xs text-gray-500 w-full text-center mb-2">Quick amounts:</p>
+        <button class="quick-amt px-4 py-2 rounded-lg text-sm font-semibold transition-all" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: #9ca3af;" data-val="100">100</button>
+        <button class="quick-amt px-4 py-2 rounded-lg text-sm font-semibold transition-all" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: #9ca3af;" data-val="500">500</button>
+        <button class="quick-amt px-4 py-2 rounded-lg text-sm font-semibold transition-all" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: #9ca3af;" data-val="1000">1,000</button>
+        <button class="quick-amt px-4 py-2 rounded-lg text-sm font-semibold transition-all" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: #9ca3af;" data-val="5000">5,000</button>
+        <button class="quick-amt px-4 py-2 rounded-lg text-sm font-semibold transition-all" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: #9ca3af;" data-val="10000">10,000</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ TRENDS CHART ═══════════════════ -->
+<section id="trends" class="py-24 px-6">
+  <div class="max-w-7xl mx-auto">
+    <div class="mb-12">
+      <div class="divider mb-4"></div>
+      <h2 class="font-display text-4xl font-bold text-white mb-3">Historical Trends</h2>
+      <p class="text-gray-400">Visualise INR movement against top currencies.</p>
+    </div>
+
+    <div class="glass rounded-3xl p-8">
+      <!-- Chart controls -->
+      <div class="flex items-center justify-between mb-8 flex-wrap gap-4">
+        <div class="flex gap-2" id="pair-tabs">
+          <button class="pair-btn active px-4 py-2 rounded-lg text-sm font-semibold" data-pair="USD">USD/INR</button>
+          <button class="pair-btn px-4 py-2 rounded-lg text-sm font-semibold" data-pair="EUR">EUR/INR</button>
+          <button class="pair-btn px-4 py-2 rounded-lg text-sm font-semibold" data-pair="GBP">GBP/INR</button>
+        </div>
+        <div class="flex gap-2" id="period-tabs">
+          <button class="period-btn px-3 py-1.5 rounded-lg text-xs font-semibold" data-days="7">1W</button>
+          <button class="period-btn active px-3 py-1.5 rounded-lg text-xs font-semibold" data-days="30">1M</button>
+          <button class="period-btn px-3 py-1.5 rounded-lg text-xs font-semibold" data-days="90">3M</button>
+          <button class="period-btn px-3 py-1.5 rounded-lg text-xs font-semibold" data-days="365">1Y</button>
+        </div>
+      </div>
+
+      <!-- Chart stat row -->
+      <div class="grid grid-cols-3 gap-6 mb-8" id="chart-stats">
+        <div>
+          <p class="text-xs text-gray-500 mb-1">Current Rate</p>
+          <p class="text-2xl font-bold text-white" id="stat-current">84.32</p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-500 mb-1">Period High</p>
+          <p class="text-2xl font-bold text-emerald-400" id="stat-high">86.10</p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-500 mb-1">Period Low</p>
+          <p class="text-2xl font-bold text-crimson-400" id="stat-low">82.05</p>
+        </div>
+      </div>
+
+      <div style="height: 300px;">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ FEATURES ═══════════════════ -->
+<section id="features" class="py-24 px-6" style="background: rgba(17,24,39,0.5);">
+  <div class="max-w-7xl mx-auto">
+    <div class="mb-16 text-center">
+      <div class="divider mx-auto mb-4"></div>
+      <h2 class="font-display text-4xl font-bold text-white mb-3">Everything You Need</h2>
+      <p class="text-gray-400 max-w-xl mx-auto">Powerful tools built for everyone — from travellers to traders to finance teams.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 stagger">
+      <div class="glass rounded-2xl p-6 rate-card">
+        <div class="feat-icon w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4">🔔</div>
+        <h3 class="font-display font-bold text-xl text-white mb-2">Smart Alerts</h3>
+        <p class="text-gray-400 text-sm leading-relaxed">Get notified instantly via email or SMS when INR crosses your target rate.</p>
+      </div>
+      <div class="glass rounded-2xl p-6 rate-card">
+        <div class="feat-icon w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4">📊</div>
+        <h3 class="font-display font-bold text-xl text-white mb-2">Historical Charts</h3>
+        <p class="text-gray-400 text-sm leading-relaxed">Analyse up to 10 years of INR data with customisable charting tools.</p>
+      </div>
+      <div class="glass rounded-2xl p-6 rate-card">
+        <div class="feat-icon w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4">⚡</div>
+        <h3 class="font-display font-bold text-xl text-white mb-2">Live Rates API</h3>
+        <p class="text-gray-400 text-sm leading-relaxed">Integrate real-time INR rates into your app with our developer-friendly REST API.</p>
+      </div>
+      <div class="glass rounded-2xl p-6 rate-card">
+        <div class="feat-icon w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4">💼</div>
+        <h3 class="font-display font-bold text-xl text-white mb-2">Portfolio Tracker</h3>
+        <p class="text-gray-400 text-sm leading-relaxed">Track your multi-currency holdings and see their live INR equivalent in one view.</p>
+      </div>
+      <div class="glass rounded-2xl p-6 rate-card">
+        <div class="feat-icon w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4">🔒</div>
+        <h3 class="font-display font-bold text-xl text-white mb-2">RBI Rate Monitor</h3>
+        <p class="text-gray-400 text-sm leading-relaxed">Stay updated with official RBI reference rates and monetary policy announcements.</p>
+      </div>
+      <div class="glass rounded-2xl p-6 rate-card">
+        <div class="feat-icon w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4">🌐</div>
+        <h3 class="font-display font-bold text-xl text-white mb-2">150+ Currencies</h3>
+        <p class="text-gray-400 text-sm leading-relaxed">From USD to XAF, track any currency's rate against the Indian Rupee worldwide.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ CTA BANNER ═══════════════════ -->
+<section class="py-24 px-6">
+  <div class="max-w-4xl mx-auto text-center">
+    <div class="glass rounded-3xl p-12 relative overflow-hidden">
+      <div class="absolute inset-0 opacity-10" style="background: radial-gradient(ellipse at center, #F59E0B, transparent 70%);"></div>
+      <div class="relative">
+        <p class="font-display text-5xl lg:text-6xl font-black text-white mb-4 leading-tight">Never miss a<br/><span class="gold-text">rate change.</span></p>
+        <p class="text-gray-400 text-lg mb-8 max-w-lg mx-auto">Join over 5 million users who trust RupeeTracker for all their INR monitoring needs.</p>
+        <div class="flex items-center gap-4 justify-center flex-wrap">
+          <input type="email" placeholder="Enter your email address" class="conv-input rounded-xl px-5 py-3.5 w-72 text-sm" />
+          <button class="btn-gold px-7 py-3.5 rounded-xl text-sm">Get Free Access</button>
+        </div>
+        <p class="text-xs text-gray-600 mt-4">No credit card required. Cancel anytime.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ FOOTER ═══════════════════ -->
+<footer style="background: #05080F; border-top: 1px solid rgba(245,158,11,0.1);" class="pt-16 pb-8 px-6">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid md:grid-cols-4 gap-12 mb-12">
+      <div class="col-span-1">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center btn-gold text-xl font-display font-black">₹</div>
+          <span class="font-display font-bold text-xl text-white">Rupee<span class="gold-text">Tracker</span></span>
+        </div>
+        <p class="text-gray-500 text-sm leading-relaxed">India's most trusted live currency tracker, built for a billion people.</p>
+      </div>
+      <div>
+        <h4 class="text-white font-semibold text-sm mb-4">Product</h4>
+        <ul class="space-y-2 text-sm text-gray-500">
+          <li><a href="#" class="hover:text-gold-500 transition-colors">Live Rates</a></li>
+          <li><a href="#" class="hover:text-gold-500 transition-colors">Converter</a></li>
+          <li><a href="#" class="hover:text-gold-500 transition-colors">Historical Data</a></li>
+          <li><a href="#" class="hover:text-gold-500 transition-colors">Price Alerts</a></li>
+          <li><a href="#" class="hover:text-gold-500 transition-colors">API Access</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-white font-semibold text-sm mb-4">Company</h4>
+        <ul class="space-y-2 text-sm text-gray-500">
+          <li><a href="#" class="hover:text-gold-500 transition-colors">About Us</a></li>
+          <li><a href="#" class="hover:text-gold-500 transition-colors">Blog</a></li>
+          <li><a href="#" class="hover:text-gold-500 transition-colors">Careers</a></li>
+          <li><a href="#" class="hover:text-gold-500 transition-colors">Press</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-white font-semibold text-sm mb-4">Legal</h4>
+        <ul class="space-y-2 text-sm text-gray-500">
+          <li><a href="#" class="hover:text-gold-500 transition-colors">Privacy Policy</a></li>
+          <li><a href="#" class="hover:text-gold-500 transition-colors">Terms of Service</a></li>
+          <li><a href="#" class="hover:text-gold-500 transition-colors">Cookie Policy</a></li>
+          <li><a href="#" class="hover:text-gold-500 transition-colors">Disclaimer</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="pt-8 flex items-center justify-between flex-wrap gap-4" style="border-top: 1px solid rgba(255,255,255,0.06);">
+      <p class="text-xs text-gray-600">© 2025 RupeeTracker. Exchange rates are indicative only. Not financial advice.</p>
+      <p class="text-xs text-gray-600">Made with ❤️ in India 🇮🇳</p>
+    </div>
+  </div>
+</footer>
+
+
+<!-- ═══════════════════ SCRIPTS ═══════════════════ -->
+<script>
+$(function() {
+
+  /* ── Rate data ── */
+  const rates = {
+    USD: { rate: 84.32, change: +0.23, flag:'🇺🇸', cat:'major' },
+    EUR: { rate: 91.45, change: +0.18, flag:'🇪🇺', cat:'major europe' },
+    GBP: { rate: 107.82, change: -0.09, flag:'🇬🇧', cat:'major europe' },
+    JPY: { rate: 0.562, change: +0.04, flag:'🇯🇵', cat:'major asia' },
+    AED: { rate: 22.96, change: +0.12, flag:'🇦🇪', cat:'major asia' },
+    SGD: { rate: 62.80, change: +0.31, flag:'🇸🇬', cat:'asia' },
+    CNY: { rate: 11.63, change: -0.15, flag:'🇨🇳', cat:'asia' },
+    HKD: { rate: 10.81, change: +0.02, flag:'🇭🇰', cat:'asia' },
+    KRW: { rate: 0.0612, change: -0.21, flag:'🇰🇷', cat:'asia' },
+    MYR: { rate: 19.14, change: +0.08, flag:'🇲🇾', cat:'asia' },
+    CHF: { rate: 95.12, change: -0.05, flag:'🇨🇭', cat:'europe' },
+    SEK: { rate:  8.02, change: +0.11, flag:'🇸🇪', cat:'europe' },
+    NOK: { rate:  7.88, change: -0.03, flag:'🇳🇴', cat:'europe' },
+    DKK: { rate: 12.24, change: +0.07, flag:'🇩🇰', cat:'europe' },
+    CAD: { rate: 61.45, change: +0.14, flag:'🇨🇦', cat:'americas' },
+    AUD: { rate: 54.90, change: -0.19, flag:'🇦🇺', cat:'major' },
+    MXN: { rate:  4.92, change: +0.06, flag:'🇲🇽', cat:'americas' },
+    BRL: { rate: 15.30, change: -0.33, flag:'🇧🇷', cat:'americas' },
+    SAR: { rate: 22.49, change: +0.10, flag:'🇸🇦', cat:'asia' },
+    ZAR: { rate:  4.66, change: -0.25, flag:'🇿🇦', cat:'asia' },
+  };
+
+  /* ── Tab styles ── */
+  function styleTab($btn, active) {
+    if (active) {
+      $btn.css({ background:'rgba(245,158,11,0.15)', border:'1px solid rgba(245,158,11,0.4)', color:'#FBBF24' });
+    } else {
+      $btn.css({ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.06)', color:'#9ca3af' });
+    }
+  }
+
+  // Init all tabs
+  $('.tab-btn, .pair-btn, .period-btn').each(function() {
+    styleTab($(this), $(this).hasClass('active'));
+  });
+
+  /* ── Build rates grid ── */
+  function buildRates(filter) {
+    const $grid = $('#rates-grid').empty();
+    $.each(rates, function(code, d) {
+      if (filter !== 'all' && !d.cat.includes(filter)) return;
+      const up = d.change >= 0;
+      const changeColor = up ? '#34D399' : '#F87171';
+      const changeBg = up ? 'rgba(52,211,153,0.1)' : 'rgba(248,113,113,0.1)';
+      const changeBorder = up ? 'rgba(52,211,153,0.2)' : 'rgba(248,113,113,0.2)';
+      const sign = up ? '+' : '';
+      $grid.append(`
+        <div class="glass rounded-2xl p-4 rate-card cursor-pointer">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">${d.flag}</span>
+              <div>
+                <p class="text-white font-bold text-sm">${code}/INR</p>
+                <p class="text-gray-500 text-xs">${code}</p>
+              </div>
+            </div>
+            <span class="text-xs px-2 py-0.5 rounded-full font-semibold"
+              style="background:${changeBg}; border:1px solid ${changeBorder}; color:${changeColor};">
+              ${sign}${d.change}%
+            </span>
+          </div>
+          <p class="font-display text-2xl font-bold text-white">₹${d.rate}</p>
+          <div class="mt-2 h-1 rounded-full overflow-hidden" style="background:rgba(255,255,255,0.05);">
+            <div class="h-full rounded-full" style="width:${50 + d.change * 10}%; background:${changeColor}; transition:width 1s ease;"></div>
+          </div>
+        </div>
+      `);
+    });
+  }
+
+  buildRates('all');
+
+  $('#rate-tabs').on('click', '.tab-btn', function() {
+    $('#rate-tabs .tab-btn').each(function() { styleTab($(this), false); });
+    styleTab($(this), true);
+    $(this).addClass('active').siblings().removeClass('active');
+    buildRates($(this).data('filter'));
+  });
+
+  /* ── Build ticker ── */
+  function buildTicker() {
+    let html = '';
+    const pairs = [['USD','🇺🇸',84.32,+0.23],['EUR','🇪🇺',91.45,+0.18],['GBP','🇬🇧',107.82,-0.09],
+      ['JPY','🇯🇵',0.562,+0.04],['AED','🇦🇪',22.96,+0.12],['SGD','🇸🇬',62.80,+0.31],
+      ['CAD','🇨🇦',61.45,+0.14],['AUD','🇦🇺',54.90,-0.19],['CHF','🇨🇭',95.12,-0.05],
+      ['CNY','🇨🇳',11.63,-0.15],['HKD','🇭🇰',10.81,+0.02],['SAR','🇸🇦',22.49,+0.10]];
+    // Duplicate for seamless loop
+    [...pairs, ...pairs].forEach(([code, flag, rate, chg]) => {
+      const col = chg >= 0 ? '#34D399' : '#F87171';
+      const sign = chg >= 0 ? '▲' : '▼';
+      html += `<span class="inline-flex items-center gap-2 px-6 text-sm font-medium whitespace-nowrap" style="color:#e8eaf0;">
+        <span>${flag} ${code}/INR</span>
+        <span class="font-bold text-white">₹${rate}</span>
+        <span style="color:${col}; font-size:11px;">${sign} ${Math.abs(chg)}%</span>
+        <span class="mx-2 opacity-20">|</span>
+      </span>`;
+    });
+    $('#ticker').html(html);
+  }
+  buildTicker();
+
+  /* ── Sparkline ── */
+  function drawSparkline() {
+    const pts = [82.1,82.8,83.0,82.5,83.4,84.0,83.7,84.3,84.1,84.6,84.2,84.32];
+    const w = 320, h = 60, min = Math.min(...pts)-0.5, max = Math.max(...pts)+0.5;
+    const x = (i) => (i/(pts.length-1))*w;
+    const y = (v) => h - ((v-min)/(max-min))*h;
+    const lineD = pts.map((v,i) => `${i?'L':'M'}${x(i)},${y(v)}`).join(' ');
+    const areaD = lineD + ` L${w},${h} L0,${h} Z`;
+    $('#sparkline-line').attr('d', lineD);
+    $('#sparkline-area').attr('d', areaD);
+  }
+  drawSparkline();
+
+  /* ── Chart.js ── */
+  const chartData = {
+    USD: { 7:[83.1,83.5,83.8,83.4,83.9,84.1,84.32], 30:null, 90:null, 365:null },
+    EUR: { 7:[90.1,90.5,91.0,90.8,91.2,91.3,91.45], 30:null, 90:null, 365:null },
+    GBP: { 7:[107.1,107.5,107.8,107.6,108.0,107.9,107.82], 30:null, 90:null, 365:null },
+  };
+
+  // Fill 30/90/365 day data
+  function genData(base, days) {
+    const arr = [];
+    let v = base - (days/365)*3;
+    for (let i = 0; i < days; i++) {
+      v += (Math.random()-0.47)*0.4;
+      arr.push(parseFloat(v.toFixed(2)));
+    }
+    arr[arr.length-1] = base;
+    return arr;
+  }
+  ['USD','EUR','GBP'].forEach(p => {
+    const b = {USD:84.32,EUR:91.45,GBP:107.82}[p];
+    chartData[p][30] = genData(b,30);
+    chartData[p][90] = genData(b,90);
+    chartData[p][365] = genData(b,365);
+  });
+
+  function getLabels(days) {
+    const labels = [];
+    const now = new Date();
+    for (let i = days-1; i >= 0; i--) {
+      const d = new Date(now); d.setDate(now.getDate()-i);
+      if (days <= 7) labels.push(d.toLocaleDateString('en-IN',{weekday:'short'}));
+      else if (days <= 30) labels.push(d.toLocaleDateString('en-IN',{day:'numeric',month:'short'}));
+      else if (days <= 90) labels.push(d.toLocaleDateString('en-IN',{day:'numeric',month:'short'}));
+      else labels.push(d.toLocaleDateString('en-IN',{month:'short',year:'2-digit'}));
+    }
+    return labels;
+  }
+
+  let activePair = 'USD', activeDays = 30;
+
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  const tChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: getLabels(30),
+      datasets: [{
+        label: 'USD/INR',
+        data: chartData['USD'][30],
+        borderColor: '#F59E0B',
+        backgroundColor: 'rgba(245,158,11,0.06)',
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: '#F59E0B',
+        tension: 0.4,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode:'index', intersect:false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#111827',
+          borderColor: 'rgba(245,158,11,0.3)',
+          borderWidth: 1,
+          titleColor: '#9ca3af',
+          bodyColor: '#ffffff',
+          bodyFont: { size: 14, weight: 'bold' },
+          callbacks: { label: ctx => ` ₹ ${ctx.raw}` }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.03)' },
+          ticks: { color: '#6b7280', font:{ size:11 }, maxTicksLimit: 8 },
+          border: { color: 'rgba(255,255,255,0.06)' }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: '#6b7280', font:{ size:11 }, callback: v => '₹'+v },
+          border: { color: 'rgba(255,255,255,0.06)' }
+        }
+      }
+    }
+  });
+
+  function updateChart() {
+    const data = chartData[activePair][activeDays];
+    tChart.data.labels = getLabels(activeDays);
+    tChart.data.datasets[0].data = data;
+    tChart.data.datasets[0].label = activePair+'/INR';
+    tChart.update('active');
+
+    const high = Math.max(...data).toFixed(2);
+    const low = Math.min(...data).toFixed(2);
+    const cur = data[data.length-1];
+    $('#stat-current').text(cur);
+    $('#stat-high').text(high);
+    $('#stat-low').text(low);
+  }
+
+  $('#pair-tabs').on('click', '.pair-btn', function() {
+    activePair = $(this).data('pair');
+    $('#pair-tabs .pair-btn').each(function() { styleTab($(this), false); });
+    styleTab($(this), true);
+    updateChart();
+  });
+  $('#period-tabs').on('click', '.period-btn', function() {
+    activeDays = parseInt($(this).data('days'));
+    $('#period-tabs .period-btn').each(function() { styleTab($(this), false); });
+    styleTab($(this), true);
+    updateChart();
+  });
+
+  /* ── Currency Converter ── */
+  function convert() {
+    const from = $('#from-currency').val();
+    const to = $('#to-currency').val();
+    const amt = parseFloat($('#from-amount').val()) || 0;
+
+    // All rates relative to INR
+    const toINR = { USD:84.32,EUR:91.45,GBP:107.82,JPY:0.562,AED:22.96,SGD:62.80,AUD:54.90,CAD:61.45,CHF:95.12,INR:1 };
+    const inrAmt = amt * (toINR[from] || 1);
+    const result = inrAmt / (toINR[to] || 1);
+    const rate = toINR[from] / toINR[to];
+
+    $('#to-amount').text(result.toLocaleString('en-IN', {maximumFractionDigits:4}));
+    $('#result-text').text(`1 ${from} = ${rate.toFixed(4)} ${to}`);
+    $('#conv-time').text('Updated just now');
+  }
+
+  $('#from-currency, #to-currency, #from-amount').on('change input', convert);
+
+  $('#swap-btn').on('click', function() {
+    const fc = $('#from-currency').val();
+    const tc = $('#to-currency').val();
+    $('#from-currency').val(tc);
+    $('#to-currency').val(fc);
+    convert();
+    $(this).css('transform','rotate(180deg)').delay(300).queue(function(n){ $(this).css('transform','rotate(0deg)'); n(); });
+  });
+
+  $('.quick-amt').on('click', function() {
+    $('#from-amount').val($(this).data('val'));
+    convert();
+  });
+
+  convert();
+
+  /* ── Navbar scroll effect ── */
+  $(window).on('scroll', function() {
+    if ($(this).scrollTop() > 60) {
+      $('#navbar').css({ background:'rgba(10,15,28,0.95)', backdropFilter:'blur(20px)', borderBottom:'1px solid rgba(245,158,11,0.1)' });
+    } else {
+      $('#navbar').css({ background:'rgba(10,15,28,0.0)', backdropFilter:'blur(0px)', borderBottom:'none' });
+    }
+  });
+
+  /* ── Simulate live rate updates ── */
+  setInterval(function() {
+    const jitter = (Math.random()-0.5)*0.06;
+    const newRate = (84.32 + jitter).toFixed(2);
+    const chg = (0.23 + jitter).toFixed(2);
+    $('#hero-rate').text(newRate);
+    $('#last-updated').text('just now');
+  }, 12000);
+
+});
+</script>
+</body>
+</html>
